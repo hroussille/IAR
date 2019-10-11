@@ -7,6 +7,8 @@ import random #used for the random choice of a strategy
 import sys
 import numpy as np
 import math
+from collections import defaultdict
+import time
 
 #--------------------------------------
 # Position of the goal:
@@ -16,9 +18,10 @@ goaly = 450
 initx = 300
 inity = 35
 # strategy choice related stuff:
-choice = -1
+choice = 0
 choice_tm1 = -1
 tLastChoice = 0
+changed = True
 rew = 0
 
 i2name=['wallFollower','radarGuidance']
@@ -44,6 +47,8 @@ angleRMax=199
 S_t = ''
 S_tm1 = ''
 
+Q = defaultdict(lambda: [0, 0])
+
 #--------------------------------------
 # the function that selects which controller (radarGuidance or wallFollower) to use
 # sets the global variable "choice" to 0 (wallFollower) or 1 (radarGuidance)
@@ -54,16 +59,18 @@ def strategyGating(arbitrationMethod,verbose=True):
   global tLastChoice
   global rew
 
+  choice_tm1 = choice
+  
   # The chosen gating strategy is to be coded here:
   #------------------------------------------------
   if arbitrationMethod=='random':
     choice = random.randrange(2)
   #------------------------------------------------
   elif arbitrationMethod=='randomPersist':
-    print('Persistent Random selection : to be implemented')
+    choice = randomPersist()
   #------------------------------------------------
   elif arbitrationMethod=='qlearning':
-    print('Q-Learning selection : to be implemented')
+    choice = qlearning()
   #------------------------------------------------
   else:
     print(arbitrationMethod+' unknown.')
@@ -72,6 +79,19 @@ def strategyGating(arbitrationMethod,verbose=True):
   if verbose:
     print("strategyGating: Active Module: "+i2name[choice])
 
+def randomPersist():
+    global choice_tm1
+    global tLastChoice
+    
+    t = time.time()
+    
+    if t - tLastChoice > 2:
+        choice_tml = random.randrange(2)
+        tLastChoice = t
+        return choice_tml
+        
+    return choice
+        
 #--------------------------------------
 def buildStateFromSensors(laserRanges,radar,dist2goal):
   S   = ''
@@ -104,6 +124,75 @@ def buildStateFromSensors(laserRanges,radar,dist2goal):
 
   return S
 
+def qlearning(alpha=0.4, beta=4, gamma=0.95):
+  global S_t
+  global S_tm1
+  global Q
+  global rew
+  global choice
+  global changed
+  global choice_tm1
+  global tLastChoice
+    
+  if rew != 0 or S_tm1 != S_t or changed is True:
+      print("train")
+      delta = rew + gamma  * np.max(Q[S_t]) - Q[S_tm1][choice_tm1]
+      Q[S_tm1][choice_tm1]  = Q[S_tm1][choice_tm1] + alpha * delta
+
+      print("{} : {}".format(S_tm1, Q[S_tm1][choice_tm1]))
+      rew = 0
+      
+  t = time.time()
+  
+  
+    
+  if t - tLastChoice < 2 or S_tm1 == S_t or rew == 0 :
+        changed = False
+        return choice
+    
+  changed = True
+  tLastChoice = t
+  
+  print("decision")
+  return discreteProb(softmax(Q, S_tm1, beta))
+   
+  
+def softmax(Q,x,beta):
+    # Returns a soft-max probability distribution over actions
+    # Inputs :
+    # - Q : a Q-function represented as a nX times nU matrix
+    # - x : the state for which we want the soft-max distribution
+    # - tau : temperature parameter of the soft-max distribution
+    # Output :
+    # - p : probability of each action according to the soft-max distribution
+    
+    p = np.zeros((len(Q[x])))
+    sump = 0
+    for i in range(len(p)) :
+        p[i] = np.exp((Q[x][i] * beta))
+        sump += p[i]
+    
+    p = p/sump
+    
+    return p
+
+def discreteProb(p):
+        # Draw a random number using probability table p (column vector)
+        # Suppose probabilities p=[p(1) ... p(n)] for the values [1:n] are given, sum(p)=1 
+        # and the components p(j) are nonnegative. 
+        # To generate a random sample of size m from this distribution,
+        #imagine that the interval (0,1) is divided into intervals with the lengths p(1),...,p(n). 
+        # Generate a uniform number rand, if this number falls in the jth interval given the discrete distribution,
+        # return the value j. Repeat m times.
+        r = np.random.random()
+        cumprob=np.hstack((np.zeros(1),p.cumsum()))
+        sample = -1
+        for j in range(p.size):
+            if (r>cumprob[j]) & (r<=cumprob[j+1]):
+                sample = j
+                break
+        return sample
+
 #--------------------------------------
 def main():
   global S_t
@@ -117,11 +206,11 @@ def main():
 
   d = Display(env_map, robot)
 
-  method = 'random'
+  method = 'qlearning'
   # experiment related stuff
   startT = time.time()
   trial = 0
-  nbTrials = 40
+  nbTrials = 20
   trialDuration = np.zeros((nbTrials))
 
   i = 0
@@ -129,11 +218,12 @@ def main():
     # update the display
     #-------------------------------------
     d.update()
+    
     # get position data from the simulation
     #-------------------------------------
     pos = robot.get_pos()
     # print("##########\nStep "+str(i)+" robot pos: x = "+str(int(pos.x()))+" y = "+str(int(pos.y()))+" theta = "+str(int(pos.theta()/math.pi*180.)))
-
+    
     # has the robot found the reward ?
     #------------------------------------
     dist2goal = math.sqrt((pos.x()-goalx)**2+(pos.y()-goaly)**2)
@@ -177,6 +267,7 @@ def main():
 
     #------------------------------------
     strategyGating(method,verbose=False)
+    
     if choice==0:
       v = wallFollower(laserRanges,verbose=False)
     else:
