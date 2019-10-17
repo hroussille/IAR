@@ -132,29 +132,27 @@ def qlearning(alpha=0.4, beta=4, gamma=0.95):
   global choice
   global changed
   global choice_tm1
-  global tLastChoice
+  global tLastChoice 
     
   if rew != 0 or S_tm1 != S_t or changed is True:
       print("train")
       delta = rew + gamma  * np.max(Q[S_t]) - Q[S_tm1][choice_tm1]
       Q[S_tm1][choice_tm1]  = Q[S_tm1][choice_tm1] + alpha * delta
-
+      print("set to : {}".format(Q[S_tm1][choice_tm1] + alpha * delta))
       print("{} : {}".format(S_tm1, Q[S_tm1][choice_tm1]))
-      rew = 0
-      
+    
   t = time.time()
-  
-  
     
-  if t - tLastChoice < 2 or S_tm1 == S_t or rew == 0 :
-        changed = False
-        return choice
-    
-  changed = True
-  tLastChoice = t
+  if t - tLastChoice > 2 or S_tm1 != S_t or rew != 0 :
+      changed = True
+      tLastChoice = t
+      rew = 0
+      return discreteProb(softmax(Q, S_tm1, beta))
   
-  print("decision")
-  return discreteProb(softmax(Q, S_tm1, beta))
+  rew = 0
+  changed = False
+  
+  return choice
    
   
 def softmax(Q,x,beta):
@@ -210,11 +208,17 @@ def main():
   # experiment related stuff
   startT = time.time()
   trial = 0
-  nbTrials = 20
+  nbTrials = 40
   trialDuration = np.zeros((nbTrials))
-
+  
+  positions = []
+  position = []
+  
+  pt = time.time()
+  
   i = 0
   while trial<nbTrials:
+  
     # update the display
     #-------------------------------------
     d.update()
@@ -224,6 +228,10 @@ def main():
     pos = robot.get_pos()
     # print("##########\nStep "+str(i)+" robot pos: x = "+str(int(pos.x()))+" y = "+str(int(pos.y()))+" theta = "+str(int(pos.theta()/math.pi*180.)))
     
+    if time.time() - pt > 1:
+        pt = time.time()
+        position.append(pos)
+        
     # has the robot found the reward ?
     #------------------------------------
     dist2goal = math.sqrt((pos.x()-goalx)**2+(pos.y()-goaly)**2)
@@ -240,6 +248,9 @@ def main():
       print("Trial "+str(trial)+" duration:"+str(trialDuration[trial]))
       trial +=1
       rew = 1
+      
+      positions.append(position)
+      position = []
 
     # get the sensor inputs:
     #------------------------------------
@@ -279,6 +290,8 @@ def main():
 
   # When the experiment is over:
   np.savetxt('log/'+str(startT)+'-TrialDurations-'+method+'.txt',trialDuration)
+  np.save('log/'+str(startT) +'_Qlearning_pos', positions)
+  np.save('log/'+str(startT) +'_Qlearning_values', dict(Q))
 
 #--------------------------------------
 
