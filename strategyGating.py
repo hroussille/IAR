@@ -149,7 +149,7 @@ def qlearning(alpha=0.4, beta=4, gamma=0.95):
       rew = 0
       return discreteProb(softmax(Q, S_tm1, beta))
   
-  rew = 0
+
   changed = False
   
   return choice
@@ -208,7 +208,7 @@ def main():
   # experiment related stuff
   startT = time.time()
   trial = 0
-  nbTrials = 40
+  nbTrials = 20
   trialDuration = np.zeros((nbTrials))
   
   positions = []
