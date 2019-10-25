@@ -43,7 +43,6 @@ class SimpleNeuralControllerNumpy():
         self.out = np.zeros(n_out)
         #print("Creating a simple mlp with %d inputs, %d outputs, %d hidden layers and %d neurons per layer"%(n_in, n_out,n_hidden_layers, n_neurons_per_hidden))
 
-    
     def init_random_params(self):
         if(self.n_hidden_layers > 0):
             self.weights = [np.random.random((self.dim_in,self.n_per_hidden))] # In -> first hidden
@@ -105,7 +104,6 @@ class SimpleNeuralControllerNumpy():
             self.weights = [w.reshape((self.dim_in,self.dim_out))]
             self.bias = [np.array(flat_parameters[n_w:])]
         self.n_weights = np.sum([np.product(w.shape) for w in self.weights]) + np.sum([np.product(b.shape) for b in self.bias])
-    
     def predict(self,x):
         """
         Propagage
