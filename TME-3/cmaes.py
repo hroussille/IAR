@@ -20,7 +20,7 @@ ma_func=ackley
 
 ############## Test CMA-ES ###################
 
-def launch_cmaes(center, sigma, nbeval=500, display=True):
+def launch_cmaes(center, sigma, nbeval=100, display=True):
     es = cma.CMAEvolutionStrategy(center, sigma)
     
     for _ in range(nbeval):
@@ -38,7 +38,7 @@ def launch_cmaes(center, sigma, nbeval=500, display=True):
 
     return es.result
 
-def launch_cmaes_pure(center, sigma, nbeval=500, display=True):
+def launch_cmaes_pure(center, sigma, nbeval=100, display=True):
     
     es = purecma.CMAES(center, sigma)
     

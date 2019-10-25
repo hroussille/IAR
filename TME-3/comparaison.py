@@ -12,16 +12,15 @@ from plot import *
 from cmaes import *
 from es import *
 
-center=[10]*16
+center=[10]*2
 sigma=5
-nbrun=20
 
 def ackley(x):
     return benchmarks.ackley(x)[0]
 
 ma_func=ackley
 
-def generate_res():
+def generate_res(nbrun=20):
     ################## Baselines ####################
 
     # Pour que les comparaisons soient équitables, il faut que les points de départ des optimisation "classiques" soient similaires 
@@ -37,21 +36,21 @@ def generate_res():
     res_es=[]
     for i in range(nbrun):
         ## Mettre ici le code pour faire appel à votre code ES et mettre le résultat dans une variable res
-        res, _, _ = launch_es(display=False, verbose=False)
-        res_es.append(res)
+        _, _, res = launch_es(display=False, verbose=False)
+        res_es.append(ackley(res[0]))
 
     ################## CMA-ES ####################
 
     res_cmaes=[]
     for i in range(nbrun):
         ## Mettre ici le code pour faire appel à votre code CMAES et mettre le résultat dans une variable res
-        res = launch_cmaes(pop, center, sigma, display=False)
+        res = launch_cmaes(pop[i], sigma, display=False)
         res_cmaes.append(res[1])
 
     res_cmaes_pure=[]
     for i in range(nbrun):
         ## Mettre ici le code pour faire appel à votre code CMAES "pure" et mettre le résultat dans une variable res
-        res = launch_cmaes_pure(pop, center, sigma, display=False)
+        res = launch_cmaes_pure(pop[i], sigma, display=False)
         res_cmaes_pure.append(res[1])
 
 

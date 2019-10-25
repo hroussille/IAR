@@ -73,14 +73,13 @@ toolbox.register("evaluate", benchmarks.ackley)
 toolbox.decorate("mate", checkStrategy(MIN_STRATEGY))
 toolbox.decorate("mutate", checkStrategy(MIN_STRATEGY))
 
-def launch_es(mu=100, lambda_=200, cxpb=0.6, mutpb=0.3, ngen=1000, display=False, verbose=False):
+def launch_es(mu=100, lambda_=200, cxpb=0.6, mutpb=0.3, ngen=100, display=False, verbose=False):
 
     # Initialisation 
     random.seed()
 
     population = toolbox.population(n=mu)
     
-    #print(population)
     
     halloffame = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -116,7 +115,7 @@ def launch_es(mu=100, lambda_=200, cxpb=0.6, mutpb=0.3, ngen=1000, display=False
         
         ### Vous pourrez tester plusieurs des algorithmes implémentés dans DEAP pour générer une population d'"enfants"
         #algorithms.eaSimple(population, toolbox, ngen=1, halloffame=halloffame, stats=stats, cxpb=cxpb, mutpb=mutpb)
-        algorithms.eaMuPlusLambda(population, toolbox, ngen=1, mu=mu, lambda_=lambda_, halloffame=halloffame, stats=stats, cxpb=cxpb, mutpb=mutpb)
+        algorithms.eaMuPlusLambda(population, toolbox, ngen=1, mu=mu, lambda_=lambda_, halloffame=halloffame, stats=stats, cxpb=cxpb, mutpb=mutpb, verbose=verbose)
         ### à partir de la population courante et pour sélectionner les géniteurs de la prochaine génération
         
 
@@ -126,7 +125,7 @@ def launch_es(mu=100, lambda_=200, cxpb=0.6, mutpb=0.3, ngen=1000, display=False
 
         # Update the statistics with the new population
         record = stats.compile(population) if stats is not None else {}
-        logbook.record(gen=gen, nevals=len(invalid_ind), **record)
+        #logbook.record(gen=gen, nevals=len(invalid_ind), **record)
         
         if verbose:
             print(logbook.stream)
