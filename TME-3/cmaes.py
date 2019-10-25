@@ -29,7 +29,7 @@ def launch_cmaes(center, sigma, nbeval=100, display=True):
         if display:
             plot_results(ackley, solutions)
         
-        es.tell(solutions, [cma.ff.rosen(s) for s in solutions])
+        es.tell(solutions, [ackley(s) for s in solutions])
         
         
        # es.disp()
@@ -50,7 +50,7 @@ def launch_cmaes_pure(center, sigma, nbeval=100, display=True):
         if display:
             plot_results(ackley, solutions)
         
-        es.tell(solutions, [cma.ff.rosen(s) for s in solutions])
+        es.tell(solutions, [ackley(s) for s in solutions])
         
        # es.disp()
 
