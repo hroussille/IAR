@@ -16,7 +16,7 @@ def plot_points(points, bg="maze_hard.pbm", title=None):
         ax1.set_title(title)
     ax1.scatter(x, y, s=2)
     plt.show()
-    
+
 def plot_points_lists(lpoints, bg="maze_hard.pbm", title=None):
     fig1, ax1 = plt.subplots()
     ax1.set_xlim(0,600)
