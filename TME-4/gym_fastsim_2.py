@@ -59,8 +59,8 @@ def eval_nn(genotype, nbstep=2000, dump=False, render=False, name=""):
     if done:
         fit = 1
 
-    #return (math.sqrt((pos[0]-env.goalPos[0])**2+(pos[1]-env.goalPos[1])**2), pos)
-    return (fit, pos)
+    return (math.sqrt((pos[0]-env.goalPos[0])**2+(pos[1]-env.goalPos[1])**2), pos)
+    #return (fit, pos)
 
 nn=SimpleNeuralControllerNumpy(5,2,2,10)
 center=nn.get_parameters()
@@ -72,7 +72,7 @@ center=nn.get_parameters()
 ## pour les variantes avec un seul objectif, vous pourrez, au choix, utiliser CMA-ES ou NSGA-2 avec un seul objectif,
 ## il vous est cependant recommandé d'utiliser NSGA-2 car cela limitera la différence entre les variantes et cela 
 ##vous fera gagner du temps pour la suite.
-variant="FIT"
+variant="NS"
 
 # votre code contiendra donc des tests comme suit pour gérer la différence entre ces variantes:
 if (variant=="FIT+NS"):
@@ -94,9 +94,9 @@ def eval_ns(x):
     return eval_nn(x)
 
 if (variant=="FIT+NS"):
-    creator.create("FitnessMin", base.Fitness, weights=(1.0, 1.0))
+    creator.create("FitnessMin", base.Fitness, weights=(-1.0, 1.0))
 elif (variant=="FIT"):
-    creator.create("FitnessMin", base.Fitness, weights=(1.0,))
+    creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
 elif (variant=="NS"):
     creator.create("FitnessMin", base.Fitness, weights=(1.0,))
 else:
@@ -266,13 +266,13 @@ env = gym.make('FastsimSimpleNavigation-v0')
 
 if (__name__ == "__main__"):
 
-    pop, logbook, paretofront= launch_nsga2(ngen=200)
+    pop, logbook, paretofront= launch_nsga2(ngen=50)
 
     #plot_pareto_front(paretofront, "Final pareto front")
 
     # evaluation finale des individus sur le front de pareto final (pour sauver les trajectoires associées)
     for i,p in enumerate(paretofront):
         print("Visualizing indiv "+str(i)+", fit="+str(p.fitness.values))
-        eval_nn(p,True,"_last_pareto_front_ind_%d"%(i))
+        eval_nn(p,dump=True,name="_last_pareto_front_ind_%d"%(i))
 
     env.close()
