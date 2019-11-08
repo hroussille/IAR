@@ -86,6 +86,7 @@ def updateNovelty(population, offspring, archive, k=15, add_strategy="random", _
        return None
        
    if(archive==None):
+       print(lbd)
        archive=NovArchive(lbd,k)
    else:
        archive.update(lbd)

@@ -39,15 +39,45 @@ MAX_STRATEGY = 10
 _env = gym.make('CartPole-v1')
 _env._max_episode_steps = 500
 
-def eval_nn(genotype, render=False, verbose=False):
-    sum_reward = 0
-    sum_distance = 0
-    sum_angle = 0
+def evolution_nn(genotype, render=False, verbose=False):
+    hist_distance = []
+    hist_angle = []
 
     nn=SimpleNeuralControllerNumpy(4,1,2,5)
     nn.set_parameters(genotype)
     observation = _env.reset()
     for t in range(1000):
+        hist_distance.append(abs(observation[0]))
+        hist_angle.append(abs(observation[2]))
+
+        if render:
+            _env.render()
+        action=nn.predict(observation)
+        if action>0:
+            action=1
+        else:
+            action=0
+        observation, reward, done, info = _env.step(action)
+       
+        if done:
+            if verbose:
+                print("Episode finished after %d timesteps"%(t+1))
+            break
+
+  
+    return hist_distance, hist_angle
+
+def eval_nn(genotype, render=False, verbose=False):
+    sum_reward = 0
+    sum_distance = 0
+    sum_angle = 0
+    _t = 0
+
+    nn=SimpleNeuralControllerNumpy(4,1,2,5)
+    nn.set_parameters(genotype)
+    observation = _env.reset()
+    for t in range(1000):
+        _t = t
         sum_distance += abs(observation[0])
         sum_angle += abs(observation[2])
 
@@ -65,6 +95,10 @@ def eval_nn(genotype, render=False, verbose=False):
                 print("Episode finished after %d timesteps"%(t+1))
             break
 
+    if (_t < 500):
+        sum_distance += abs(observation[0] * (500 - _t))
+        sum_angle += abs(observation[2] * (500 - _t))
+    
     return sum_reward, sum_distance, sum_angle
 
 # La fonction doit être minimisée, le poids est donc de -1
@@ -109,7 +143,7 @@ toolbox.register("evaluate", eval_nn)
 toolbox.decorate("mate", checkStrategy(MIN_STRATEGY))
 toolbox.decorate("mutate", checkStrategy(MIN_STRATEGY))
 
-def launch_nsga2(mu=200, lambda_=200, cxpb=0.3, mutpb=0.3, ngen=10000, display=False, verbose=False):
+def launch_nsga2(mu=200, lambda_=200, cxpb=0.3, mutpb=0.3, ngen=200, display=False, verbose=False):
 
     random.seed()
 
@@ -192,7 +226,7 @@ if __name__ == '__main__':
     ax = fig.add_subplot(111, projection='3d')
 
     for i,p in enumerate(paretofront):
-        reward, distance, angle = eval_nn(p, render=True)
+        reward, distance, angle = eval_nn(p, render=False)
         ax.scatter(reward, distance, angle)
 
 
@@ -201,3 +235,29 @@ if __name__ == '__main__':
     ax.set_zlabel('Sum angles')
 
     plt.show()
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    
+    best_x = sorted(list(paretofront.items), key= lambda x: x.fitness.values[1])[0]
+    best_theta = sorted(list(paretofront.items), key= lambda x: x.fitness.values[2])[0]
+    
+    hist_distance, hist_angle = evolution_nn(best_x)
+    
+    plt.plot(hist_distance)
+    ax.set_xlabel('Time (timesteps)')
+    ax.set_ylabel('abs(x)')
+    ax.set_title('Evolution of x through time')
+    plt.show()
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    
+    hist_distance, hist_angle = evolution_nn(best_theta)
+    
+    plt.plot(hist_angle)
+    ax.set_xlabel('Time (timesteps)')
+    ax.set_ylabel('abs(theta)')
+    ax.set_title('Evolution of theta through time')
+    plt.show()
+    

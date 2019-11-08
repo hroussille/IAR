@@ -56,3 +56,7 @@ def fit_cartpole():
 
     return hist, -es.result.fbest, es.result.xbest
 
+
+hist, fbest, xbest = fit_cartpole()
+
+eval_nn(xbest, render=True)
